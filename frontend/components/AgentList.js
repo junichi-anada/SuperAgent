@@ -14,7 +14,13 @@ const AgentList = ({ setSelectedAgent }) => {
 			}
 
 			try {
-				const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/agents`;
+				const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+				if (!baseUrl) {
+					console.error("Environment variable NEXT_PUBLIC_API_BASE_URL is not defined.");
+					// setError("Configuration error: API base URL is missing."); // setError is not defined here
+					return;
+				}
+				const apiUrl = `${baseUrl}/agents`;
 				const response = await fetch(apiUrl, {
 					headers: {
 						Authorization: `Bearer ${token}`,

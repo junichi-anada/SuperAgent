@@ -11,7 +11,12 @@ const ChatHistory = ({ agent, setSelectedChat }) => {
 				if (!token) return;
 
 				try {
-					const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/chats/agent/${agent.id}`;
+					const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+					if (!baseUrl) {
+						console.error("Environment variable NEXT_PUBLIC_API_BASE_URL is not defined.");
+						return;
+					}
+					const apiUrl = `${baseUrl}/chats/agent/${agent.id}`;
 					const response = await fetch(apiUrl, {
 						headers: {
 							Authorization: `Bearer ${token}`,

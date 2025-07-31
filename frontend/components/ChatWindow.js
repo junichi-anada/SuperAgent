@@ -14,7 +14,13 @@ const ChatWindow = ({ chat, agent }) => {
 				if (!token) return;
 
 				try {
-					const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/chats/${chat.id}/messages`;
+					const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+					if (!baseUrl) {
+						console.error("Environment variable NEXT_PUBLIC_API_BASE_URL is not defined.");
+						setError("Configuration error: API base URL is missing.");
+						return;
+					}
+					const apiUrl = `${baseUrl}/chats/${chat.id}/messages`;
 					const response = await fetch(apiUrl, {
 						headers: {
 							Authorization: `Bearer ${token}`,
@@ -49,7 +55,13 @@ const ChatWindow = ({ chat, agent }) => {
 
 		if (!chatToUse) {
 			try {
-				const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/chats/`;
+				const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+				if (!baseUrl) {
+					console.error("Environment variable NEXT_PUBLIC_API_BASE_URL is not defined.");
+					setError("Configuration error: API base URL is missing.");
+					return;
+				}
+				const apiUrl = `${baseUrl}/chats/`;
 				const response = await fetch(apiUrl, {
 					method: "POST",
 					headers: {
@@ -74,12 +86,19 @@ const ChatWindow = ({ chat, agent }) => {
 			}
 		}
 
-		const tempMessage = { id: `temp-${Date.now()}`, content: newMessage, sender: "user" };
+		const tempMessage = { id: `temp-${crypto.randomUUID()}`, content: newMessage, sender: "user" };
 		setMessages((prev) => [...prev, tempMessage]);
 		setNewMessage("");
 
 		try {
-			const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/chats/${chatToUse.id}/messages`;
+			const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+			if (!baseUrl) {
+				console.error("Environment variable NEXT_PUBLIC_API_BASE_URL is not defined.");
+				setError("Configuration error: API base URL is missing.");
+				setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
+				return;
+			}
+			const apiUrl = `${baseUrl}/chats/${chatToUse.id}/messages`;
 			const response = await fetch(apiUrl, {
 				method: "POST",
 				headers: {
