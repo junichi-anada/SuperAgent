@@ -4,6 +4,7 @@ const ChatWindow = ({ chat, agent }) => {
 	const [messages, setMessages] = useState([]);
 	const [newMessage, setNewMessage] = useState("");
 	const [currentChat, setCurrentChat] = useState(chat);
+	const [error, setError] = useState(null);
 
 	useEffect(() => {
 		setCurrentChat(chat);
@@ -23,9 +24,11 @@ const ChatWindow = ({ chat, agent }) => {
 						setMessages(data);
 					} else {
 						console.error("Failed to fetch messages");
+						setError("Failed to load messages.");
 					}
 				} catch (error) {
 					console.error("Error fetching messages:", error);
+					setError("An error occurred while fetching messages.");
 				}
 			};
 			fetchMessages();
@@ -36,13 +39,13 @@ const ChatWindow = ({ chat, agent }) => {
 
 	const handleSendMessage = async () => {
 		if (newMessage.trim() === "" || !agent) return;
+		setError(null);
 
 		const token = localStorage.getItem("access_token");
 		if (!token) return;
 
 		let chatToUse = currentChat;
 
-		// Create a new chat if one doesn't exist
 		if (!chatToUse) {
 			try {
 				const response = await fetch("http://localhost:8000/chats/", {
@@ -59,17 +62,20 @@ const ChatWindow = ({ chat, agent }) => {
 					chatToUse = newChat;
 				} else {
 					console.error("Failed to create new chat");
-					alert("Failed to create a new chat. Please try again.");
+					setError("Failed to create a new chat. Please try again.");
 					return;
 				}
 			} catch (error) {
 				console.error("Error creating new chat:", error);
-				alert("An error occurred while creating a new chat. Please try again.");
+				setError("An error occurred while creating a new chat. Please try again.");
 				return;
 			}
 		}
 
-		// Send the message
+		const tempMessage = { id: `temp-${Date.now()}`, content: newMessage, sender: "user" };
+		setMessages((prev) => [...prev, tempMessage]);
+		setNewMessage("");
+
 		try {
 			const response = await fetch(`http://localhost:8000/chats/${chatToUse.id}/messages`, {
 				method: "POST",
@@ -81,14 +87,17 @@ const ChatWindow = ({ chat, agent }) => {
 			});
 
 			if (response.ok) {
-				const newMessages = await response.json();
-				setMessages((prev) => [...prev, ...newMessages]);
-				setNewMessage("");
+				const [userMessage, aiMessage] = await response.json();
+				setMessages((prev) => [...prev.filter((msg) => msg.id !== tempMessage.id), userMessage, aiMessage]);
 			} else {
 				console.error("Failed to send message");
+				setError("Failed to send message. Please try again.");
+				setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
 			}
 		} catch (error) {
 			console.error("Error sending message:", error);
+			setError("An error occurred while sending the message. Please try again.");
+			setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
 		}
 	};
 
@@ -119,6 +128,7 @@ const ChatWindow = ({ chat, agent }) => {
 				))}
 			</div>
 			<div className="p-4 border-t border-gray-700">
+				{error && <p className="text-red-500 text-sm mb-2">{error}</p>}
 				<input type="text" placeholder="Type a message..." className="w-full bg-gray-700 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyDown={handleKeyDown} />
 			</div>
 		</div>
