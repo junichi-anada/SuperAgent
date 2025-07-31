@@ -8,19 +8,13 @@ const AgentList = () => (
 		<h2 className="text-xl font-bold mb-4">Agents</h2>
 		<ul className="space-y-2">
 			<li>
-				<a href="#" className="block p-2 rounded hover:bg-gray-700">
-					Agent 1
-				</a>
+				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 1 (Sample)</span>
 			</li>
 			<li>
-				<a href="#" className="block p-2 rounded hover:bg-gray-700">
-					Agent 2
-				</a>
+				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 2 (Sample)</span>
 			</li>
 			<li>
-				<a href="#" className="block p-2 rounded hover:bg-gray-700">
-					Agent 3
-				</a>
+				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 3 (Sample)</span>
 			</li>
 		</ul>
 	</div>
@@ -31,12 +25,12 @@ const ChatHistory = () => (
 		<h2 className="text-xl font-bold mb-4">Chats</h2>
 		<ul className="space-y-2">
 			<li>
-				<a href="#" className="block p-2 rounded hover:bg-gray-700">
+				<a href="javascript:void(0)" className="block p-2 rounded hover:bg-gray-700" title="Sample item - not functional">
 					Chat with Agent 1
 				</a>
 			</li>
 			<li>
-				<a href="#" className="block p-2 rounded hover:bg-gray-700">
+				<a href="javascript:void(0)" className="block p-2 rounded hover:bg-gray-700" title="Sample item - not functional">
 					Chat with Agent 2
 				</a>
 			</li>
@@ -44,20 +38,35 @@ const ChatHistory = () => (
 	</div>
 );
 
-const ChatWindow = () => (
-	<div className="bg-gray-800 rounded-lg h-full flex flex-col">
-		<div className="p-4 border-b border-gray-700">
-			<h2 className="text-xl font-bold">Agent 1</h2>
+const ChatWindow = () => {
+	const [message, setMessage] = useState("");
+
+	const handleInputChange = (e) => {
+		setMessage(e.target.value);
+	};
+
+	const handleKeyDown = (e) => {
+		if (e.key === "Enter" && message.trim()) {
+			console.log("Message sent:", message); // Replace with actual message handling logic
+			setMessage("");
+		}
+	};
+
+	return (
+		<div className="bg-gray-800 rounded-lg h-full flex flex-col">
+			<div className="p-4 border-b border-gray-700">
+				<h2 className="text-xl font-bold">Agent 1</h2>
+			</div>
+			<div className="flex-grow p-4 overflow-y-auto">
+				{/* Chat messages go here */}
+				<p>Hello! How can I help you today?</p>
+			</div>
+			<div className="p-4 border-t border-gray-700">
+				<input type="text" placeholder="Type a message..." className="w-full bg-gray-700 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value={message} onChange={handleInputChange} onKeyDown={handleKeyDown} />
+			</div>
 		</div>
-		<div className="flex-grow p-4 overflow-y-auto">
-			{/* Chat messages go here */}
-			<p>Hello! How can I help you today?</p>
-		</div>
-		<div className="p-4 border-t border-gray-700">
-			<input type="text" placeholder="Type a message..." className="w-full bg-gray-700 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-		</div>
-	</div>
-);
+	);
+};
 
 export default function Dashboard() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
