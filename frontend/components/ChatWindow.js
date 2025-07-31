@@ -14,7 +14,8 @@ const ChatWindow = ({ chat, agent }) => {
 				if (!token) return;
 
 				try {
-					const response = await fetch(`http://localhost:8000/chats/${chat.id}/messages`, {
+					const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/chats/${chat.id}/messages`;
+					const response = await fetch(apiUrl, {
 						headers: {
 							Authorization: `Bearer ${token}`,
 						},
@@ -48,7 +49,8 @@ const ChatWindow = ({ chat, agent }) => {
 
 		if (!chatToUse) {
 			try {
-				const response = await fetch("http://localhost:8000/chats/", {
+				const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/chats/`;
+				const response = await fetch(apiUrl, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
@@ -77,7 +79,8 @@ const ChatWindow = ({ chat, agent }) => {
 		setNewMessage("");
 
 		try {
-			const response = await fetch(`http://localhost:8000/chats/${chatToUse.id}/messages`, {
+			const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/chats/${chatToUse.id}/messages`;
+			const response = await fetch(apiUrl, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

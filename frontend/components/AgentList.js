@@ -14,7 +14,8 @@ const AgentList = ({ setSelectedAgent }) => {
 			}
 
 			try {
-				const response = await fetch("http://localhost:8000/agents", {
+				const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/agents`;
+				const response = await fetch(apiUrl, {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},
