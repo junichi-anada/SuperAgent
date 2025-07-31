@@ -10,3 +10,9 @@ node_modules/
 npm-debug.log
 build/
 dist/
+
+.cline/
+.cline/handoff.json
+.clinerules/
+.documents/
+.documents/instructions/
