@@ -2,11 +2,74 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
-export default function Home() {
-	const [message, setMessage] = useState("Loading...");
-	const [ollamaResponse, setOllamaResponse] = useState(null);
-	const [isLoading, setIsLoading] = useState(false);
-	const [error, setError] = useState(null);
+// 仮のコンポーネントたち
+const AgentList = () => (
+	<div className="bg-gray-800 rounded-lg p-4 h-full">
+		<h2 className="text-xl font-bold mb-4">Agents</h2>
+		<ul className="space-y-2">
+			<li>
+				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 1 (Sample)</span>
+			</li>
+			<li>
+				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 2 (Sample)</span>
+			</li>
+			<li>
+				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 3 (Sample)</span>
+			</li>
+		</ul>
+	</div>
+);
+
+const ChatHistory = () => (
+	<div className="bg-gray-800 rounded-lg p-4 h-full">
+		<h2 className="text-xl font-bold mb-4">Chats</h2>
+		<ul className="space-y-2">
+			<li>
+				<button className="w-full text-left block p-2 rounded hover:bg-gray-700" title="Sample item - not functional" onClick={() => {}}>
+					Chat with Agent 1
+				</button>
+			</li>
+			<li>
+				<button className="w-full text-left block p-2 rounded hover:bg-gray-700" title="Sample item - not functional" onClick={() => {}}>
+					Chat with Agent 2
+				</button>
+			</li>
+		</ul>
+	</div>
+);
+
+const ChatWindow = () => {
+	const [message, setMessage] = useState("");
+
+	const handleInputChange = (e) => {
+		setMessage(e.target.value);
+	};
+
+	const handleKeyDown = (e) => {
+		if (e.key === "Enter" && message.trim()) {
+			// TODO: Implement actual message sending logic
+			console.log("Message sent (dev only):", message);
+			setMessage("");
+		}
+	};
+
+	return (
+		<div className="bg-gray-800 rounded-lg h-full flex flex-col">
+			<div className="p-4 border-b border-gray-700">
+				<h2 className="text-xl font-bold">Agent 1</h2>
+			</div>
+			<div className="flex-grow p-4 overflow-y-auto">
+				{/* Chat messages go here */}
+				<p>Hello! How can I help you today?</p>
+			</div>
+			<div className="p-4 border-t border-gray-700">
+				<input type="text" placeholder="Type a message..." className="w-full bg-gray-700 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value={message} onChange={handleInputChange} onKeyDown={handleKeyDown} />
+			</div>
+		</div>
+	);
+};
+
+export default function Dashboard() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const router = useRouter();
 
@@ -14,41 +77,10 @@ export default function Home() {
 		const token = localStorage.getItem("access_token");
 		if (token) {
 			setIsLoggedIn(true);
+		} else {
+			router.push("/login");
 		}
-
-		fetch(process.env.NEXT_PUBLIC_API_URL)
-			.then((res) => {
-				if (!res.ok) {
-					throw new Error("Network response was not ok");
-				}
-				return res.json();
-			})
-			.then((data) => setMessage(data.message))
-			.catch((error) => {
-				console.error("Fetch error:", error);
-				setMessage("Failed to fetch message from backend.");
-			});
-	}, []);
-
-	const callOllamaAPI = async () => {
-		setIsLoading(true);
-		setError(null);
-		setOllamaResponse(null);
-
-		try {
-			const response = await fetch("http://backend:8000/api/v1/poc/call-ollama");
-			if (!response.ok) {
-				throw new Error(`HTTP error! status: ${response.status}`);
-			}
-			const data = await response.json();
-			setOllamaResponse(data);
-		} catch (err) {
-			setError(err.message);
-			console.error("Error calling Ollama API:", err);
-		} finally {
-			setIsLoading(false);
-		}
-	};
+	}, [router]);
 
 	const handleLogout = () => {
 		localStorage.removeItem("access_token");
@@ -56,77 +88,29 @@ export default function Home() {
 		router.push("/login");
 	};
 
+	if (!isLoggedIn) {
+		return <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">Loading...</div>;
+	}
+
 	return (
-		<div style={{ fontFamily: "sans-serif", textAlign: "center", marginTop: "50px" }}>
-			<div style={{ position: "absolute", top: "20px", right: "20px" }}>
-				{isLoggedIn && (
-					<button
-						onClick={handleLogout}
-						style={{
-							padding: "10px 20px",
-							fontSize: "1rem",
-							backgroundColor: "#f44336",
-							color: "white",
-							border: "none",
-							borderRadius: "6px",
-							cursor: "pointer",
-						}}
-					>
-						ログアウト
-					</button>
-				)}
-			</div>
-
-			<h1>✨ Super Agent ✨</h1>
-
-			{isLoggedIn ? (
-				<div>
-					<h2>ようこそ！</h2>
-					<nav style={{ marginTop: "30px", display: "flex", justifyContent: "center", gap: "20px" }}>
-						<Link href="/agents" style={{ textDecoration: "none", color: "#0070f3", fontSize: "1.2rem", padding: "10px 20px", border: "1px solid #0070f3", borderRadius: "8px" }}>
-							エージェント一覧
-						</Link>
-						<Link href="/chats" style={{ textDecoration: "none", color: "#0070f3", fontSize: "1.2rem", padding: "10px 20px", border: "1px solid #0070f3", borderRadius: "8px" }}>
-							チャット
-						</Link>
-					</nav>
-				</div>
-			) : (
-				<div>
-					<h2>Frontend</h2>
-					<p style={{ fontSize: "1.2rem", padding: "20px", background: "#f0f0f0", borderRadius: "8px", display: "inline-block" }}>
-						Message from backend: <strong>{message}</strong>
-					</p>
-
-					<div style={{ marginTop: "40px" }}>
-						<button
-							onClick={callOllamaAPI}
-							disabled={isLoading}
-							style={{
-								padding: "12px 24px",
-								fontSize: "1rem",
-								backgroundColor: isLoading ? "#ccc" : "#0070f3",
-								color: "white",
-								border: "none",
-								borderRadius: "6px",
-								cursor: isLoading ? "not-allowed" : "pointer",
-								transition: "background-color 0.2s",
-							}}
-						>
-							{isLoading ? "呼び出し中..." : "バックエンドAPIを呼び出す"}
-						</button>
-					</div>
-
-					{error && <div style={{ marginTop: "20px", padding: "10px", backgroundColor: "#fee", borderRadius: "6px", color: "#c00" }}>エラー: {error}</div>}
-
-					{ollamaResponse && (
-						<div style={{ marginTop: "20px", padding: "20px", backgroundColor: "#e7f5ff", borderRadius: "8px", textAlign: "left", maxWidth: "600px", margin: "20px auto" }}>
-							<h3>APIレスポンス:</h3>
-							<pre style={{ backgroundColor: "#f5f5f5", padding: "10px", borderRadius: "4px", overflow: "auto" }}>{JSON.stringify(ollamaResponse, null, 2)}</pre>
-						</div>
-					)}
-				</div>
-			)}
+		<div className="bg-gray-900 text-white min-h-screen flex flex-col">
+			<header className="flex justify-between items-center p-4 border-b border-gray-700">
+				<h1 className="text-2xl font-bold">✨ Super Agent ✨</h1>
+				<button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+					ログアウト
+				</button>
+			</header>
+			<main className="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4 p-4">
+				<aside className="md:col-span-1">
+					<AgentList />
+				</aside>
+				<section className="md:col-span-1">
+					<ChatHistory />
+				</section>
+				<section className="md:col-span-2">
+					<ChatWindow />
+				</section>
+			</main>
 		</div>
 	);
 }
