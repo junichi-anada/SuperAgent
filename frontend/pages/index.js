@@ -25,14 +25,14 @@ const ChatHistory = () => (
 		<h2 className="text-xl font-bold mb-4">Chats</h2>
 		<ul className="space-y-2">
 			<li>
-				<a href="javascript:void(0)" className="block p-2 rounded hover:bg-gray-700" title="Sample item - not functional">
+				<button className="w-full text-left block p-2 rounded hover:bg-gray-700" title="Sample item - not functional" onClick={() => {}}>
 					Chat with Agent 1
-				</a>
+				</button>
 			</li>
 			<li>
-				<a href="javascript:void(0)" className="block p-2 rounded hover:bg-gray-700" title="Sample item - not functional">
+				<button className="w-full text-left block p-2 rounded hover:bg-gray-700" title="Sample item - not functional" onClick={() => {}}>
 					Chat with Agent 2
-				</a>
+				</button>
 			</li>
 		</ul>
 	</div>
@@ -47,7 +47,8 @@ const ChatWindow = () => {
 
 	const handleKeyDown = (e) => {
 		if (e.key === "Enter" && message.trim()) {
-			console.log("Message sent:", message); // Replace with actual message handling logic
+			// TODO: Implement actual message sending logic
+			console.log("Message sent (dev only):", message);
 			setMessage("");
 		}
 	};
