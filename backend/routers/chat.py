@@ -24,6 +24,11 @@ def get_chat_details(chat_id: int, db: Session = Depends(get_db), current_user: 
         raise HTTPException(status_code=404, detail="Chat not found")
     return chat
 
+@router.get("/agent/{agent_id}", response_model=List[schemas.Chat])
+def get_chats_by_agent(agent_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
+    chats = crud.get_chats_by_agent_id(db, agent_id=agent_id, user_id=current_user.id, skip=skip, limit=limit)
+    return chats
+
 @router.get("/{chat_id}/messages", response_model=List[schemas.Message])
 def get_messages(chat_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     chat = crud.get_chat(db, chat_id, current_user.id)
@@ -32,7 +37,7 @@ def get_messages(chat_id: int, skip: int = 0, limit: int = 100, db: Session = De
     
     return crud.get_messages(db=db, chat_id=chat_id, skip=skip, limit=limit)
 
-@router.post("/{chat_id}/messages", response_model=schemas.Message)
+@router.post("/{chat_id}/messages", response_model=List[schemas.Message])
 def send_message(chat_id: int, message: schemas.MessageCreate, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     chat = crud.get_chat(db, chat_id, current_user.id)
     if not chat:
@@ -48,13 +53,13 @@ def send_message(chat_id: int, message: schemas.MessageCreate, db: Session = Dep
             response.raise_for_status()
             ai_response = response.json()["response"]
         
-        ai_message = schemas.MessageCreate(content=ai_response)
-        crud.create_message(db=db, message=ai_message, chat_id=chat_id, sender="ai")
+        ai_message_schema = schemas.MessageCreate(content=ai_response)
+        ai_message = crud.create_message(db=db, message=ai_message_schema, chat_id=chat_id, sender="ai")
         
     except httpx.RequestError as e:
         raise HTTPException(status_code=500, detail=f"Failed to get AI response: {str(e)}")
     
-    return user_message
+    return [user_message, ai_message]
 
 @router.websocket("/ws/{chat_id}")
 async def websocket_endpoint(websocket: WebSocket, chat_id: int, db: Session = Depends(get_db)):

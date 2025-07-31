@@ -109,6 +109,9 @@ def create_chat(db: Session, chat: schemas.ChatCreate, user_id: int):
 def get_chat(db: Session, chat_id: int, user_id: int) -> Optional[models.Chat]:
     return db.query(models.Chat).filter(models.Chat.id == chat_id, models.Chat.user_id == user_id).first()
 
+def get_chats_by_agent_id(db: Session, agent_id: int, user_id: int, skip: int = 0, limit: int = 100) -> List[models.Chat]:
+    return db.query(models.Chat).filter(models.Chat.agent_id == agent_id, models.Chat.user_id == user_id).offset(skip).limit(limit).all()
+
 def create_message(db: Session, message: schemas.MessageCreate, chat_id: int, sender: str, image_url: Optional[str] = None):
     db_message = models.Message(content=message.content, chat_id=chat_id, sender=sender, image_url=image_url)
     db.add(db_message)
