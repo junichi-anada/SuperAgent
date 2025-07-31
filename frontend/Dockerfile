@@ -4,8 +4,16 @@ FROM node:18-alpine
 # 作業ディレクトリを設定
 WORKDIR /app
 
-# 依存関係をインストール
+# 依存関係をキャッシュするために、package.jsonを先にコピー
 COPY package*.json ./
+
+# ディレクトリの所有権をnodeユーザーに変更
+RUN chown -R node:node /app
+
+# ユーザーをnodeに切り替え
+USER node
+
+# 依存関係をインストール
 RUN npm install
 
 # アプリケーションのコードをコピー

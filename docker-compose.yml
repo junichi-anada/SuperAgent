@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   frontend:
     build:
@@ -38,6 +36,38 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["gpu"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  comfyui:
+    image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+    profiles: ["gpu"]
+    ports:
+      - "8188:8188"
+    volumes:
+      - comfyui_data:/workspace
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
 volumes:
   postgres_data:
+  ollama_data:
+  comfyui_data:
 

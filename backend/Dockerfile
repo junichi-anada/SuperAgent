@@ -11,5 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # アプリケーションのコードをコピー
 COPY . .
 
-# 8000番ポートでリッスンするようにUvicornを起動
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# entrypoint.shに実行権限を付与
+RUN chmod +x /app/entrypoint.sh
+
+# エントリーポイントを設定
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
