@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import Button from "../components/ui/Button";
 
 export default function Home() {
 	const [message, setMessage] = useState("Loading...");
@@ -57,76 +58,61 @@ export default function Home() {
 	};
 
 	return (
-		<div style={{ fontFamily: "sans-serif", textAlign: "center", marginTop: "50px" }}>
-			<div style={{ position: "absolute", top: "20px", right: "20px" }}>
-				{isLoggedIn && (
-					<button
-						onClick={handleLogout}
-						style={{
-							padding: "10px 20px",
-							fontSize: "1rem",
-							backgroundColor: "#f44336",
-							color: "white",
-							border: "none",
-							borderRadius: "6px",
-							cursor: "pointer",
-						}}
-					>
-						ログアウト
-					</button>
-				)}
-			</div>
-
-			<h1>✨ Super Agent ✨</h1>
-
-			{isLoggedIn ? (
-				<div>
-					<h2>ようこそ！</h2>
-					<nav style={{ marginTop: "30px", display: "flex", justifyContent: "center", gap: "20px" }}>
-						<Link href="/agents" style={{ textDecoration: "none", color: "#0070f3", fontSize: "1.2rem", padding: "10px 20px", border: "1px solid #0070f3", borderRadius: "8px" }}>
-							エージェント一覧
-						</Link>
-						<Link href="/chats" style={{ textDecoration: "none", color: "#0070f3", fontSize: "1.2rem", padding: "10px 20px", border: "1px solid #0070f3", borderRadius: "8px" }}>
-							チャット
-						</Link>
-					</nav>
-				</div>
-			) : (
-				<div>
-					<h2>Frontend</h2>
-					<p style={{ fontSize: "1.2rem", padding: "20px", background: "#f0f0f0", borderRadius: "8px", display: "inline-block" }}>
-						Message from backend: <strong>{message}</strong>
-					</p>
-
-					<div style={{ marginTop: "40px" }}>
-						<button
-							onClick={callOllamaAPI}
-							disabled={isLoading}
-							style={{
-								padding: "12px 24px",
-								fontSize: "1rem",
-								backgroundColor: isLoading ? "#ccc" : "#0070f3",
-								color: "white",
-								border: "none",
-								borderRadius: "6px",
-								cursor: isLoading ? "not-allowed" : "pointer",
-								transition: "background-color 0.2s",
-							}}
-						>
-							{isLoading ? "呼び出し中..." : "バックエンドAPIを呼び出す"}
+		<div className="min-h-screen bg-gray-100">
+			{isLoggedIn && (
+				<header className="bg-white shadow-sm">
+					<div className="container mx-auto px-4 py-3 flex justify-between items-center">
+						<div></div>
+						<button onClick={handleLogout} className="px-4 py-2 font-bold text-white bg-danger rounded-md hover:bg-danger-hover transition-colors">
+							ログアウト
 						</button>
 					</div>
-
-					{error && <div style={{ marginTop: "20px", padding: "10px", backgroundColor: "#fee", borderRadius: "6px", color: "#c00" }}>エラー: {error}</div>}
-
-					{ollamaResponse && (
-						<div style={{ marginTop: "20px", padding: "20px", backgroundColor: "#e7f5ff", borderRadius: "8px", textAlign: "left", maxWidth: "600px", margin: "20px auto" }}>
-							<h3>APIレスポンス:</h3>
-							<pre style={{ backgroundColor: "#f5f5f5", padding: "10px", borderRadius: "4px", overflow: "auto" }}>{JSON.stringify(ollamaResponse, null, 2)}</pre>
-						</div>
-					)}
-				</div>
+				</header>
 			)}
+
+			<main className="container mx-auto px-4 py-10 text-center">
+				<h1 className="text-5xl font-bold">✨ Super Agent ✨</h1>
+
+				{isLoggedIn ? (
+					<div className="mt-8">
+						<h2 className="text-3xl font-semibold">ようこそ！</h2>
+						<nav className="mt-10 flex justify-center gap-6">
+							<Link href="/agents" className="px-8 py-4 bg-white border-2 border-primary rounded-lg text-xl font-bold text-primary hover:bg-blue-50 transition-all duration-300 transform hover:scale-105">
+								エージェント一覧
+							</Link>
+							<Link href="/chats" className="px-8 py-4 bg-white border-2 border-primary rounded-lg text-xl font-bold text-primary hover:bg-blue-50 transition-all duration-300 transform hover:scale-105">
+								チャット
+							</Link>
+						</nav>
+					</div>
+				) : (
+					<div className="mt-8">
+						<h2 className="text-3xl font-semibold">Frontend</h2>
+						<p className="mt-4 text-lg p-5 bg-white rounded-lg shadow-md inline-block">
+							Message from backend: <strong className="font-semibold text-primary">{message}</strong>
+						</p>
+
+						<div className="mt-10">
+							<Button onClick={callOllamaAPI} disabled={isLoading}>
+								{isLoading ? "呼び出し中..." : "バックエンドAPIを呼び出す"}
+							</Button>
+						</div>
+
+						{error && (
+							<div className="mt-6 max-w-xl mx-auto px-4 py-3 text-red-700 bg-red-100 border border-red-400 rounded-md" role="alert">
+								<span className="block sm:inline">エラー: {error}</span>
+							</div>
+						)}
+
+						{ollamaResponse && (
+							<div className="mt-6 max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md text-left">
+								<h3 className="text-xl font-bold mb-4">APIレスポンス:</h3>
+								<pre className="p-4 bg-gray-100 rounded-md overflow-auto text-sm">{JSON.stringify(ollamaResponse, null, 2)}</pre>
+							</div>
+						)}
+					</div>
+				)}
+			</main>
 		</div>
 	);
 }
