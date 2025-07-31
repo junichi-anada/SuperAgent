@@ -14,7 +14,7 @@ const AgentList = ({ setSelectedAgent }) => {
 			}
 
 			try {
-				const response = await fetch("/api/agents", {
+				const response = await fetch("http://localhost:8000/agents", {
 					headers: {
 						Authorization: `Bearer ${token}`,
 					},

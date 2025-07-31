@@ -11,7 +11,7 @@ const ChatHistory = ({ agent, setSelectedChat }) => {
 				if (!token) return;
 
 				try {
-					const response = await fetch(`/api/chats/agent/${agent.id}`, {
+					const response = await fetch(`http://localhost:8000/chats/agent/${agent.id}`, {
 						headers: {
 							Authorization: `Bearer ${token}`,
 						},

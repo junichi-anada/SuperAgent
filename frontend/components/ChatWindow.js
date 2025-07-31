@@ -13,7 +13,7 @@ const ChatWindow = ({ chat, agent }) => {
 				if (!token) return;
 
 				try {
-					const response = await fetch(`/api/chats/${chat.id}/messages`, {
+					const response = await fetch(`http://localhost:8000/chats/${chat.id}/messages`, {
 						headers: {
 							Authorization: `Bearer ${token}`,
 						},
@@ -45,7 +45,7 @@ const ChatWindow = ({ chat, agent }) => {
 		// Create a new chat if one doesn't exist
 		if (!chatToUse) {
 			try {
-				const response = await fetch("/api/chats/", {
+				const response = await fetch("http://localhost:8000/chats/", {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
@@ -71,7 +71,7 @@ const ChatWindow = ({ chat, agent }) => {
 
 		// Send the message
 		try {
-			const response = await fetch(`/api/chats/${chatToUse.id}/messages`, {
+			const response = await fetch(`http://localhost:8000/chats/${chatToUse.id}/messages`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -81,10 +81,8 @@ const ChatWindow = ({ chat, agent }) => {
 			});
 
 			if (response.ok) {
-				const sentMessage = await response.json();
-				// Optimistically add the user's message.
-				// The AI's response should be handled separately, e.g., via WebSocket or polling.
-				setMessages((prev) => [...prev, sentMessage]);
+				const newMessages = await response.json();
+				setMessages((prev) => [...prev, ...newMessages]);
 				setNewMessage("");
 			} else {
 				console.error("Failed to send message");
