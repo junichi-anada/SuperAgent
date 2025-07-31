@@ -24,6 +24,11 @@ def get_chat_details(chat_id: int, db: Session = Depends(get_db), current_user: 
         raise HTTPException(status_code=404, detail="Chat not found")
     return chat
 
+@router.get("/agent/{agent_id}", response_model=List[schemas.Chat])
+def get_chats_by_agent(agent_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
+    chats = crud.get_chats_by_agent_id(db, agent_id=agent_id, user_id=current_user.id, skip=skip, limit=limit)
+    return chats
+
 @router.get("/{chat_id}/messages", response_model=List[schemas.Message])
 def get_messages(chat_id: int, skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: schemas.User = Depends(get_current_user)):
     chat = crud.get_chat(db, chat_id, current_user.id)

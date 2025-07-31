@@ -1,77 +1,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-
-// 仮のコンポーネントたち
-const AgentList = () => (
-	<div className="bg-gray-800 rounded-lg p-4 h-full">
-		<h2 className="text-xl font-bold mb-4">Agents</h2>
-		<ul className="space-y-2">
-			<li>
-				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 1 (Sample)</span>
-			</li>
-			<li>
-				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 2 (Sample)</span>
-			</li>
-			<li>
-				<span className="block p-2 rounded bg-gray-700 text-gray-400">Agent 3 (Sample)</span>
-			</li>
-		</ul>
-	</div>
-);
-
-const ChatHistory = () => (
-	<div className="bg-gray-800 rounded-lg p-4 h-full">
-		<h2 className="text-xl font-bold mb-4">Chats</h2>
-		<ul className="space-y-2">
-			<li>
-				<button className="w-full text-left block p-2 rounded hover:bg-gray-700" title="Sample item - not functional" onClick={() => {}}>
-					Chat with Agent 1
-				</button>
-			</li>
-			<li>
-				<button className="w-full text-left block p-2 rounded hover:bg-gray-700" title="Sample item - not functional" onClick={() => {}}>
-					Chat with Agent 2
-				</button>
-			</li>
-		</ul>
-	</div>
-);
-
-const ChatWindow = () => {
-	const [message, setMessage] = useState("");
-
-	const handleInputChange = (e) => {
-		setMessage(e.target.value);
-	};
-
-	const handleKeyDown = (e) => {
-		if (e.key === "Enter" && message.trim()) {
-			// TODO: Implement actual message sending logic
-			console.log("Message sent (dev only):", message);
-			setMessage("");
-		}
-	};
-
-	return (
-		<div className="bg-gray-800 rounded-lg h-full flex flex-col">
-			<div className="p-4 border-b border-gray-700">
-				<h2 className="text-xl font-bold">Agent 1</h2>
-			</div>
-			<div className="flex-grow p-4 overflow-y-auto">
-				{/* Chat messages go here */}
-				<p>Hello! How can I help you today?</p>
-			</div>
-			<div className="p-4 border-t border-gray-700">
-				<input type="text" placeholder="Type a message..." className="w-full bg-gray-700 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500" value={message} onChange={handleInputChange} onKeyDown={handleKeyDown} />
-			</div>
-		</div>
-	);
-};
+import AgentList from "../components/AgentList";
+import ChatHistory from "../components/ChatHistory";
+import ChatWindow from "../components/ChatWindow";
 
 export default function Dashboard() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const router = useRouter();
+	const [selectedAgent, setSelectedAgent] = useState(null);
+	const [selectedChat, setSelectedChat] = useState(null);
 
 	useEffect(() => {
 		const token = localStorage.getItem("access_token");
@@ -102,13 +40,13 @@ export default function Dashboard() {
 			</header>
 			<main className="flex-grow grid grid-cols-1 md:grid-cols-4 gap-4 p-4">
 				<aside className="md:col-span-1">
-					<AgentList />
+					<AgentList setSelectedAgent={setSelectedAgent} />
 				</aside>
 				<section className="md:col-span-1">
-					<ChatHistory />
+					<ChatHistory agent={selectedAgent} setSelectedChat={setSelectedChat} />
 				</section>
 				<section className="md:col-span-2">
-					<ChatWindow />
+					<ChatWindow chat={selectedChat} agent={selectedAgent} />
 				</section>
 			</main>
 		</div>
