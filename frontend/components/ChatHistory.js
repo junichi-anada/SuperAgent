@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NEW_CHAT_TEXT } from "../constants";
 
 const ChatHistory = ({ agent, setSelectedChat }) => {
 	const [chats, setChats] = useState([]);
@@ -42,7 +43,7 @@ const ChatHistory = ({ agent, setSelectedChat }) => {
 				{agent && (
 					<li>
 						<button onClick={handleNewChat} className="w-full text-left block p-2 rounded bg-blue-600 hover:bg-blue-700 font-bold">
-							+ 新しいチャットを開始
+							{NEW_CHAT_TEXT}
 						</button>
 					</li>
 				)}

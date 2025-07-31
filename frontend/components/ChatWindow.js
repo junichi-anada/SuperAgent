@@ -59,10 +59,12 @@ const ChatWindow = ({ chat, agent }) => {
 					chatToUse = newChat;
 				} else {
 					console.error("Failed to create new chat");
+					alert("Failed to create a new chat. Please try again.");
 					return;
 				}
 			} catch (error) {
 				console.error("Error creating new chat:", error);
+				alert("An error occurred while creating a new chat. Please try again.");
 				return;
 			}
 		}
@@ -80,10 +82,10 @@ const ChatWindow = ({ chat, agent }) => {
 
 			if (response.ok) {
 				const sentMessage = await response.json();
-				// Optimistically add the user's message, then wait for AI response
+				// Optimistically add the user's message.
+				// The AI's response should be handled separately, e.g., via WebSocket or polling.
 				setMessages((prev) => [...prev, sentMessage]);
 				setNewMessage("");
-				// Here you would typically set up a WebSocket or poll for the AI's response
 			} else {
 				console.error("Failed to send message");
 			}

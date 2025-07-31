@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { NEW_AGENT_BUTTON_TEXT } from "../constants";
 
 const AgentList = ({ setSelectedAgent }) => {
 	const [agents, setAgents] = useState([]);
@@ -36,7 +37,7 @@ const AgentList = ({ setSelectedAgent }) => {
 		<div className="bg-gray-800 rounded-lg p-4 h-full">
 			<h2 className="text-xl font-bold mb-4">Agents</h2>
 			<Link href="/agents/new">
-				<button className="w-full text-left block p-2 rounded bg-green-600 hover:bg-green-700 font-bold mb-4">+ 新しいエージェントを作成</button>
+				<button className="w-full text-left block p-2 rounded bg-green-600 hover:bg-green-700 font-bold mb-4">{NEW_AGENT_BUTTON_TEXT}</button>
 			</Link>
 			<ul className="space-y-2">
 				{agents.map((agent) => (
