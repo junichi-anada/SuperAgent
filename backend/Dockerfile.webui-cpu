@@ -1,0 +1,42 @@
+FROM python:3.10-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    libgoogle-perftools4 \
+    libtcmalloc-minimal4 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Clone Stable Diffusion WebUI
+RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git
+
+WORKDIR /app/stable-diffusion-webui
+
+# Download model
+RUN mkdir -p models/Stable-diffusion && \
+    wget -O models/Stable-diffusion/v1-5-pruned-emaonly.safetensors \
+    "https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors"
+
+# Create launch script
+RUN echo '#!/bin/bash' > launch.sh && \
+    echo 'python launch.py $COMMANDLINE_ARGS' >> launch.sh && \
+    chmod +x launch.sh
+
+# Expose port
+EXPOSE 7860
+
+# Set environment variable for CPU-only operation
+ENV COMMANDLINE_ARGS="--api --listen --port 7860 --no-half --skip-torch-cuda-test --use-cpu all --precision full --no-half-vae --disable-nan-check"
+
+# Run the WebUI
+CMD ["./launch.sh"]

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Signup() {
 	const [username, setUsername] = useState("");
@@ -9,6 +10,7 @@ export default function Signup() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState(null);
 	const router = useRouter();
+	const { login } = useAuth();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -16,7 +18,7 @@ export default function Signup() {
 		setError(null);
 
 		try {
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/signup`, {
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/signup`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -33,7 +35,9 @@ export default function Signup() {
 				throw new Error(errorData.detail || "サインアップに失敗しました");
 			}
 
-			await response.json();
+			const data = await response.json();
+			// Signup doesn't return a token, so we can't log in directly.
+			// We will redirect to login page.
 			router.push("/login");
 		} catch (err) {
 			setError(err.message);

@@ -3,6 +3,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000
     ports:
       - "3000:3000"
     volumes:
@@ -20,10 +22,17 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - static_data:/app/static
     depends_on:
       - db
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/superagent
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
+      - IMAGE_GENERATION_PROVIDER=${IMAGE_GENERATION_PROVIDER}
+      - MODELSLAB_API_KEY=${MODELSLAB_API_KEY}
+      - MODELSLAB_MODEL_ID=${MODELSLAB_MODEL_ID}
+      - WEBUI_API_URL=${WEBUI_API_URL}
 
   db:
     image: postgres:15
@@ -36,38 +45,80 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  ollama:
-    image: ollama/ollama:latest
-    profiles: ["gpu"]
+  stable-diffusion-webui-cpu:
+    image: universonic/stable-diffusion-webui:latest
+    profiles: ["cpu"]
     ports:
-      - "11434:11434"
+      - "7861:8080"
     volumes:
-      - ollama_data:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+      - webui_data:/workspace/stable-diffusion-webui
+      - ./webui_models:/app/stable-diffusion-webui/models
+      - webui_outputs:/app/stable-diffusion-webui/outputs
+      - ./backend/webui-entrypoint.sh:/app/custom-entrypoint.sh:ro
+    environment:
+      - WEBUI_HOST=0.0.0.0
+      - WEBUI_PORT=8080
+      - COMMANDLINE_ARGS=--api --listen --port 8080 --enable-insecure-extension-access --skip-torch-cuda-test --no-half --use-cpu all --precision full --disable-opt-split-attention --opt-sub-quad-attention --lowvram --allow-code --controlnet-dir extensions/sd-webui-controlnet
+    entrypoint: ["/bin/bash", "/app/custom-entrypoint.sh"]
 
-  comfyui:
-    image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
-    profiles: ["gpu"]
-    ports:
-      - "8188:8188"
-    volumes:
-      - comfyui_data:/workspace
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   profiles: ["gpu"]
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+  # comfyui:
+  #   image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+  #   profiles: ["gpu"]
+  #   ports:
+  #     - "8188:8188"
+  #   volumes:
+  #     - comfyui_data:/workspace
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+  # stable-diffusion-webui:
+  #   image: hlky/torch2-cu121-auto1111:latest
+  #   profiles: ["gpu"]
+  #   ports:
+  #     - "7860:7860"
+  #   volumes:
+  #     - webui_data:/workspace/stable-diffusion-webui
+  #     - webui_models:/workspace/stable-diffusion-webui/models
+  #   environment:
+  #     - WEBUI_HOST=0.0.0.0
+  #     - WEBUI_PORT=7860
+  #     - COMMANDLINE_ARGS=--api --listen --enable-insecure-extension-access --skip-torch-cuda-test --no-half
+    # GPU設定はコメントアウト（WSL環境対応）
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
 
 volumes:
   postgres_data:
-  ollama_data:
-  comfyui_data:
+  webui_data:
+  webui_models:
+  webui_outputs:
+  static_data:
+  # ollama_data:
+  # comfyui_data:
 

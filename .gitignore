@@ -17,3 +17,6 @@ dist/
 .clinerules/
 .documents/
 .documents/instructions/
+
+# AI Model
+webui_models/

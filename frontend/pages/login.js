@@ -1,13 +1,13 @@
 import { useState } from "react";
-import { useRouter } from "next/router";
 import Link from "next/link";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Login() {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState(null);
-	const router = useRouter();
+	const { login } = useAuth();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -15,7 +15,7 @@ export default function Login() {
 		setError(null);
 
 		try {
-			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/token`, {
+			const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/token`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/x-www-form-urlencoded",
@@ -32,8 +32,7 @@ export default function Login() {
 			}
 
 			const data = await response.json();
-			localStorage.setItem("access_token", data.access_token);
-			router.push("/");
+			login(data.access_token);
 		} catch (err) {
 			setError(err.message);
 		} finally {

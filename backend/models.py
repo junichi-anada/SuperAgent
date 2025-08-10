@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table, Text
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table, Text, Boolean, BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -40,15 +40,30 @@ class Agent(Base):
     name = Column(String, nullable=False)
     description = Column(String)
     gender = Column(String, nullable=True)
+    relationship_status = Column(String, nullable=True)
     background = Column(Text, nullable=True)
+    hair_style = Column(String, nullable=True)
+    hair_color = Column(String, nullable=True)
+    eye_color = Column(String, nullable=True)
+    ethnicity = Column(String, nullable=True)
+    age = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    body_type = Column(String, nullable=True)
+    clothing = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     owner_id = Column(Integer, ForeignKey("users.id"))
+    image_url = Column(String, nullable=True)
+    image_seed = Column(BigInteger, nullable=True)
+    first_person = Column(String, nullable=True)
+    first_person_other = Column(String, nullable=True)
+    second_person = Column(String, nullable=True)
     
     owner = relationship("User", back_populates="agents")
     chats = relationship("Chat", back_populates="agent")
     personalities = relationship("Personality", secondary=agent_personalities, back_populates="agents")
     roles = relationship("Role", secondary=agent_roles, back_populates="agents")
     tones = relationship("Tone", secondary=agent_tones, back_populates="agents")
+    images = relationship("AgentImage", back_populates="agent", cascade="all, delete-orphan")
 
 class Chat(Base):
     __tablename__ = "chats"
@@ -60,13 +75,13 @@ class Chat(Base):
     
     user = relationship("User", back_populates="chats")
     agent = relationship("Agent", back_populates="chats")
-    messages = relationship("Message", back_populates="chat")
+    messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")
 
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    chat_id = Column(Integer, ForeignKey("chats.id"))
+    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"))
     content = Column(String)
     sender = Column(String)  # "user" or "ai"
     image_url = Column(String, nullable=True)
@@ -97,3 +112,32 @@ class Tone(Base):
     name = Column(String, unique=True, nullable=False)
     
     agents = relationship("Agent", secondary=agent_tones, back_populates="tones")
+
+class AgentImage(Base):
+    __tablename__ = "agent_images"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    agent_id = Column(Integer, ForeignKey("agents.id", ondelete="CASCADE"))
+    image_url = Column(String, nullable=False)
+    is_primary = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    agent = relationship("Agent", back_populates="images")
+
+
+class ImageGenerationLog(Base):
+    __tablename__ = "image_generation_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    agent_id = Column(Integer, ForeignKey("agents.id"), nullable=False)
+    message_id = Column(Integer, ForeignKey("messages.id"), nullable=True)
+    user_message = Column(Text, nullable=False)
+    keywords = Column(Text, nullable=True)
+    model = Column(String, nullable=True)
+    prompt = Column(Text, nullable=False)
+    ip_adapter_model = Column(String, nullable=True)
+    image_url = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    agent = relationship("Agent")
+    message = relationship("Message")

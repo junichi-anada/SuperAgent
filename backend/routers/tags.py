@@ -5,7 +5,7 @@ import crud, schemas
 from database import get_db
 
 router = APIRouter(
-    prefix="/api/v1/tags",
+    prefix="/tags",
     tags=["tags"],
     responses={404: {"description": "Not found"}},
 )

@@ -24,7 +24,7 @@ export default function ChatRoom() {
 		if (!id) return;
 
 		// Fetch chat info
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/${id}`, {
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/chats/${id}`, {
 			headers: {
 				Authorization: `Bearer ${localStorage.getItem("access_token")}`,
 			},
@@ -37,7 +37,7 @@ export default function ChatRoom() {
 			.catch((err) => console.error(err));
 
 		// Load existing messages
-		fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/${id}/messages`, {
+		fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/chats/${id}/messages`, {
 			headers: {
 				Authorization: `Bearer ${localStorage.getItem("access_token")}`,
 			},
@@ -71,7 +71,7 @@ export default function ChatRoom() {
 			router.push("/login");
 			return;
 		}
-		const websocket = new WebSocket(`ws://localhost:8000/chats/ws/${id}?token=${token}`);
+		const websocket = new WebSocket(`${process.env.NEXT_PUBLIC_API_URL.replace(/^http/, 'ws')}/api/v1/chats/ws/${id}?token=${token}`);
 
 		websocket.onopen = () => {
 			console.log("WebSocket connected");
@@ -152,7 +152,7 @@ export default function ChatRoom() {
 													</Box>
 												)}
 												<Typography component="span" variant="caption" color="text.secondary">
-													{new Date(message.timestamp).toLocaleString("ja-JP")}
+													{message.created_at ? new Date(message.created_at).toLocaleString("ja-JP") : ""}
 												</Typography>
 											</>
 										}
