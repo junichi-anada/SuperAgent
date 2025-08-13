@@ -55,13 +55,18 @@ def get_agents(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> Li
         joinedload(models.Agent.images)
     ).filter(models.Agent.owner_id == user_id).offset(skip).limit(limit).all()
 
-def get_agent(db: Session, agent_id: int, user_id: int) -> Optional[models.Agent]:
-    return db.query(models.Agent).options(
+def get_agent(db: Session, agent_id: int, user_id: Optional[int]) -> Optional[models.Agent]:
+    query = db.query(models.Agent).options(
         joinedload(models.Agent.personalities),
         joinedload(models.Agent.roles),
         joinedload(models.Agent.tones),
         joinedload(models.Agent.images)
-    ).filter(models.Agent.id == agent_id, models.Agent.owner_id == user_id).first()
+    ).filter(models.Agent.id == agent_id)
+    
+    if user_id is not None:
+        query = query.filter(models.Agent.owner_id == user_id)
+        
+    return query.first()
 
 def get_agent_without_user_check(db: Session, agent_id: int) -> Optional[models.Agent]:
     """Get an agent without user_id check (for testing purposes only)"""

@@ -49,7 +49,6 @@ class AgentBase(BaseModel):
     eye_color: Optional[str] = None
     ethnicity: Optional[str] = None
     age: Optional[int] = None
-    height: Optional[int] = None
     body_type: Optional[str] = None
     clothing: Optional[str] = None
     image_url: Optional[str] = None
@@ -72,7 +71,6 @@ class AgentUpdate(AgentBase):
     eye_color: Optional[str] = None
     ethnicity: Optional[str] = None
     age: Optional[int] = None
-    height: Optional[int] = None
     body_type: Optional[str] = None
     clothing: Optional[str] = None
     personality_ids: List[int] = []

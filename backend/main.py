@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from routers import auth, agents, chat, tags
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from services.llm_service import LLMService
 from services.image_generation_service import ImageGenerationService
-from dependencies import get_llm_service
+from dependencies import get_llm_service, get_ws_llm_service
 import logging
 import json
 
@@ -16,7 +16,14 @@ app = FastAPI()
 
 @app.on_event("startup")
 async def startup_event():
-    app.state.image_generation_service = ImageGenerationService()
+    # R18モード設定の読み込み
+    app.state.r18_mode_chat = os.getenv("R18_MODE_CHAT", "disable").lower() == "enable"
+    app.state.r18_mode_image = os.getenv("R18_MODE_IMAGE", "disable").lower() == "enable"
+    logger.info(f"R18 Mode - Chat: {'Enabled' if app.state.r18_mode_chat else 'Disabled'}, Image: {'Enabled' if app.state.r18_mode_image else 'Disabled'}")
+
+    app.state.image_generation_service = ImageGenerationService(
+        r18_mode_image=app.state.r18_mode_image
+    )
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO)
@@ -66,7 +73,7 @@ async def websocket_test_endpoint(
     websocket: WebSocket,
     agent_id: int,
     db: Session = Depends(get_db),
-    llm_service: LLMService = Depends(get_llm_service)
+    llm_service: LLMService = Depends(get_ws_llm_service)
 ):
     """テスト用のWebSocketエンドポイント（認証なし）"""
     await websocket.accept()
@@ -77,11 +84,19 @@ async def websocket_test_endpoint(
             
             # 応答を生成
             try:
+                # エージェント情報を取得
+                from crud import get_agent
+                agent = get_agent(db, agent_id=agent_id, user_id=None) #テスト用なのでuser_idはNone
+                if not agent:
+                    await websocket.send_text(json.dumps({"error": True, "content": "Agent not found"}))
+                    continue
+
                 response = await llm_service.generate_response(
                     db=db,
                     message=message,
-                    agent_id=agent_id,
+                    agent=agent,
                     chat_id=None,  # テスト用なのでchat_idは使用しない
+                    user_message_id=None, # テスト用なのでuser_message_idは使用しない
                 )
                 
                 # エラーチェック

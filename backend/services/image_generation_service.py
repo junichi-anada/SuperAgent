@@ -3,6 +3,7 @@ import uuid
 import logging
 import traceback
 import asyncio
+import schemas
 from pathlib import Path
 from typing import Optional, Dict, Any
 from io import BytesIO
@@ -16,18 +17,20 @@ from database import SessionLocal
 from services.llm_clients.huggingface_client import get_huggingface_client
 from services.llm_clients.modelslab_client import ModelsLabClient
 from services.llm_clients.stable_diffusion_webui_client import get_stable_diffusion_webui_client
+from services.r18_content_analyzer import analyze_r18_score
 
 logger = logging.getLogger(__name__)
 
 class ImageGenerationService:
     """画像生成と保存を管理するサービス"""
 
-    def __init__(self):
+    def __init__(self, r18_mode_image: bool = False):
         self.backend_url = os.getenv("BACKEND_URL", "http://localhost:8000")
         self.storage_path = Path("backend/static/agent_images")
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.fallback_image_url = "/static/fallback_agent.png"
         self.generation_logs = {}  # 生成ログを一時的に保存
+        self.r18_mode_image = r18_mode_image
         
         # プロバイダーの決定：環境変数 > デフォルト
         provider = os.getenv("IMAGE_GENERATION_PROVIDER", "huggingface")
@@ -58,13 +61,15 @@ class ImageGenerationService:
             f"wearing {agent.clothing}",
         ]
         
-        # リアルな写真風のプロンプトを構築
-        prompt = "R3alisticF, "
+        # 少し意図して撮った自撮り風のプロンプト
+        prompt = "photo, selfie from a high angle, " # やや上からのアングルを指定
         prompt += f"a portrait of a {', '.join(filter(None, details))}, "
+        prompt += "front-facing camera view, " # インカメラからの視点を強調
         prompt += f"background: {agent.background}, "
-        prompt += "High Detail, Perfect Composition, high contrast, photorealistic, "
-        prompt += "professional photography, studio lighting, sharp focus, detailed skin texture, "
-        prompt += "realistic lighting, natural pose, high resolution, masterpiece"
+        prompt += "soft lighting, " # 柔らかい光
+        prompt += "looking at the camera, smiling, " # カメラ目線で微笑む動作を追加
+        prompt += "realistic, detailed face"
+        
         
         logger.info(f"Generated prompt from agent attributes: {prompt}")
         logger.info(f"Agent details - Gender: {agent.gender}, Ethnicity: {agent.ethnicity}, Age: {agent.age}, Hair: {agent.hair_style}, Eyes: {agent.eye_color}, Body: {agent.body_type}, Clothing: {agent.clothing}")
@@ -73,7 +78,7 @@ class ImageGenerationService:
 
     def _generate_negative_prompt(self) -> str:
         """ネガティブプロンプトを返します。"""
-        return "(worst quality:2), (low quality:2), (normal quality:2), (jpeg artifacts), (blurry), (duplicate), (morbid), (mutilated), (out of frame), (extra limbs), (bad anatomy), (disfigured), (deformed), (cross-eye), (glitch), (oversaturated), (overexposed), (underexposed), (bad proportions), (bad hands), (bad feet), (cloned face), (long neck), (missing arms), (missing legs), (extra fingers), (fused fingers), (poorly drawn hands), (poorly drawn face), (mutation), (deformed eyes), watermark, text, logo, signature, grainy, tiling, censored, nsfw, ugly, blurry eyes, noisy image, bad lighting, unnatural skin, asymmetry, cartoon, anime, drawing, painting, illustration, rendered, 3d, cgi, plastic, doll, fake"
+        return "(worst quality:2), (low quality:2), (normal quality:2), (jpeg artifacts), (blurry), (duplicate), (morbid), (mutilated), (out of frame), (extra limbs), (bad anatomy), (disfigured), (deformed), (cross-eye), (glitch), (oversaturated), (overexposed), (underexposed), (bad proportions), (bad hands), (bad feet), (cloned face), (long neck), (missing arms), (missing legs), (extra fingers), (fused fingers), (poorly drawn hands), (poorly drawn face), (mutation), (deformed eyes), watermark, text, logo, signature, grainy, tiling, censored, ugly, blurry eyes, noisy image, bad lighting, unnatural skin, asymmetry, cartoon, anime, drawing, painting, illustration, rendered, 3d, cgi, plastic, doll, fake"
 
     def _remove_old_image(self, image_url: Optional[str]) -> None:
         """古い画像ファイルを削除します。"""
@@ -103,7 +108,8 @@ class ImageGenerationService:
         force_regenerate: bool = False,
         user_message: Optional[str] = None,
         keywords: Optional[str] = None,
-        message_id: Optional[int] = None
+        message_id: Optional[int] = None,
+        websocket: Optional[Any] = None
     ):
         """画像生成のコアロジック"""
         agent_id = agent.id
@@ -126,8 +132,36 @@ class ImageGenerationService:
 
         # プロンプト生成
         self.generation_logs[agent_id]["steps"].append({"step": "prompt_generation", "status": "started", "timestamp": datetime.now().isoformat()})
+        
+        final_prompt = prompt
         negative_prompt = self._generate_negative_prompt()
-        self.generation_logs[agent_id].update({"prompt": prompt, "negative_prompt": negative_prompt})
+
+        # R18モードが有効で、ユーザーメッセージがある場合にスコアを判定
+        if self.r18_mode_image and user_message:
+            r18_score = analyze_r18_score(user_message)
+            logger.info(f"R18 score for message '{user_message[:50]}...': {r18_score}")
+            if websocket:
+                try:
+                    # R18スコアをフロントエンドに送信
+                    r18_score_payload = {
+                        "type": "status",
+                        "status": "image_generation_r18_score",
+                        "message": "画像を生成しています...",
+                        "r18_score": r18_score
+                    }
+                    logger.info(f"Sending R18 score payload: {r18_score_payload}")
+                    asyncio.create_task(websocket.send_json(r18_score_payload))
+                except Exception as e:
+                    logger.warning(f"Failed to send R18 score via WebSocket: {e}")
+
+            if r18_score >= 60:
+                logger.info("R18 content detected. Modifying prompt for NSFW.")
+                # R18用のプロンプト調整
+                final_prompt = f"(NSFW:1.5), (sex:1.3), {prompt}"
+                # R18用のネガティブプロンプト調整 (nsfw, censoredを削除)
+                negative_prompt = negative_prompt.replace("nsfw, ", "").replace("censored, ", "")
+
+        self.generation_logs[agent_id].update({"prompt": final_prompt, "negative_prompt": negative_prompt})
         self.generation_logs[agent_id]["steps"][-1].update({"status": "completed", "message": "Prompt generated successfully"})
 
         if not self.client:
@@ -143,7 +177,7 @@ class ImageGenerationService:
 
         try:
             self.generation_logs[agent_id]["steps"].append({"step": "image_generation", "status": "started", "timestamp": datetime.now().isoformat(), "provider": self.client.__class__.__name__})
-            logger.info(f"Generating image for agent {agent_id} with prompt: {prompt}")
+            logger.info(f"Generating image for agent {agent_id} with prompt: {final_prompt}")
             
             generation_start = datetime.now()
             
@@ -156,7 +190,7 @@ class ImageGenerationService:
                 ip_adapter_model = "default_ip_adapter"
 
             image_data, generated_seed = await self.client.generate_image_async(
-                prompt=prompt,
+                prompt=final_prompt,
                 negative_prompt=negative_prompt,
                 progress_callback=progress_callback,
                 seed=agent.image_seed if not force_regenerate else None,
@@ -257,7 +291,8 @@ class ImageGenerationService:
         keywords: str,
         chat_id: int,
         message_id: int,
-        force_regenerate: bool = False
+        force_regenerate: bool = False,
+        websocket: Optional[Any] = None
     ):
         """チャットの文脈で画像を生成し、メッセージとして保存します。"""
         image_url, generated_seed = await self._generate_and_save_image_internal(
@@ -267,7 +302,8 @@ class ImageGenerationService:
             force_regenerate=force_regenerate,
             user_message=user_message,
             keywords=keywords,
-            message_id=message_id
+            message_id=message_id,
+            websocket=websocket
         )
 
         # Update message with image url

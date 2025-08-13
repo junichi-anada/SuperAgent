@@ -47,7 +47,6 @@ class Agent(Base):
     eye_color = Column(String, nullable=True)
     ethnicity = Column(String, nullable=True)
     age = Column(Integer, nullable=True)
-    height = Column(Integer, nullable=True)
     body_type = Column(String, nullable=True)
     clothing = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

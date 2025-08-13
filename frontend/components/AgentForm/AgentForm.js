@@ -19,7 +19,6 @@ export default function AgentForm({ agentId, onSave, onCancel, onDelete, onAgent
 	const [eyeColor, setEyeColor] = useState("");
 	const [ethnicity, setEthnicity] = useState("");
 	const [age, setAge] = useState(30);
-	const [height, setHeight] = useState(170);
 	const [bodyType, setBodyType] = useState("");
 	const [clothing, setClothing] = useState("");
 	const [selectedPersonalities, setSelectedPersonalities] = useState([]);
@@ -132,7 +131,6 @@ export default function AgentForm({ agentId, onSave, onCancel, onDelete, onAgent
 					setEyeColor(data.eye_color || "");
 					setEthnicity(data.ethnicity || "");
 					setAge(data.age || 30);
-					setHeight(data.height || 170);
 					setBodyType(data.body_type || "");
 					setClothing(data.clothing || "");
 					setImageUrl(data.image_url || "");
@@ -173,7 +171,6 @@ export default function AgentForm({ agentId, onSave, onCancel, onDelete, onAgent
 				eye_color: eyeColor,
 				ethnicity: ethnicity,
 				age: parseInt(age, 10),
-				height: parseInt(height, 10),
 				body_type: bodyType,
 				clothing: clothing,
 				personality_ids: selectedPersonalities,
@@ -396,7 +393,7 @@ export default function AgentForm({ agentId, onSave, onCancel, onDelete, onAgent
 			case 'basic':
 				return <BasicInfoTab {...{ name, setName, description, setDescription, relationshipStatus, setRelationshipStatus, relationshipOptions, firstPerson, setFirstPerson, firstPersonOther, setFirstPersonOther, firstPersonOptions, background, setBackground, imageUrl, openModal }} />;
 			case 'appearance':
-				return <AppearanceTab {...{ gender, setGender, age, setAge, height, setHeight, ethnicity, setEthnicity, bodyType, setBodyType, bodyTypeOptions, hairStyle, setHairStyle, hairStyleOptions, hairColor, setHairColor, eyeColor, setEyeColor, clothing, setClothing, clothingOptions, isEditMode, handleGenerateImage, isGeneratingImage, isDeletingImage, progress, imageUrl, handleDeleteImage, imageSeed, setImageSeed, openModal, generationLog }} />;
+				return <AppearanceTab {...{ gender, setGender, age, setAge, ethnicity, setEthnicity, bodyType, setBodyType, bodyTypeOptions, hairStyle, setHairStyle, hairStyleOptions, hairColor, setHairColor, eyeColor, setEyeColor, clothing, setClothing, clothingOptions, isEditMode, handleGenerateImage, isGeneratingImage, isDeletingImage, progress, imageUrl, handleDeleteImage, imageSeed, setImageSeed, openModal, generationLog }} />;
 			case 'personality':
 				return <PersonalityTab {...{ personalities, selectedPersonalities, handleTagChange, setSelectedPersonalities, roles, selectedRoles, setSelectedRoles, tones, selectedTones, setSelectedTones }} />;
 			default:

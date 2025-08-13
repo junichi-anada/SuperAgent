@@ -8,6 +8,7 @@ from .error_handler import ErrorHandler
 from .image_request_detector import ImageRequestDetector
 from .image_prompt_analyzer import ImagePromptAnalyzer
 from .image_generation_service import ImageGenerationService
+from .r18_content_analyzer import R18ContentAnalyzer, analyze_r18_score
 import logging
 import asyncio
 
@@ -24,6 +25,8 @@ class LLMService:
         image_request_detector: Optional[ImageRequestDetector] = None,
         image_prompt_analyzer: Optional[ImagePromptAnalyzer] = None,
         image_generation_service: Optional[ImageGenerationService] = None,
+        r18_content_analyzer: Optional[R18ContentAnalyzer] = None,
+        r18_mode_chat: bool = False,
     ):
         self.prompt_builder = prompt_builder
         self.llm_client = llm_client
@@ -33,6 +36,12 @@ class LLMService:
         self.image_request_detector = image_request_detector
         self.image_prompt_analyzer = image_prompt_analyzer
         self.image_generation_service = image_generation_service
+        
+        # R18関連サービス
+        self.r18_content_analyzer = r18_content_analyzer
+        
+        # R18モード設定
+        self.r18_mode_chat = r18_mode_chat
 
     async def generate_response(
         self,
@@ -61,7 +70,8 @@ class LLMService:
             prompt = await self.prompt_builder.build(
                 agent=agent,
                 message=message,
-                context=context
+                context=context,
+                r18_mode_chat=self.r18_mode_chat
             )
 
             # 3. LLM APIを呼び出し
@@ -75,6 +85,24 @@ class LLMService:
                 raise ValueError("Invalid response from LLM")
 
             response_content = raw_response["content"]
+            
+            r18_score = None  # R18スコアを保持する変数を初期化
+            # R18スコアの計算と送信
+            if self.r18_content_analyzer and websocket:
+                try:
+                    # ユーザーメッセージとAI応答を結合して分析
+                    combined_text = message + " " + response_content
+                    r18_score = self.r18_content_analyzer.analyze(combined_text)
+                    
+                    await websocket.send_json({
+                        "type": "status",
+                        "status": "r18_score_updated",
+                        "message": f"R18スコア: {r18_score}",
+                        "r18_score": r18_score
+                    })
+                    logger.info(f"Sent R18 score to client: {r18_score}")
+                except Exception as e:
+                    logger.error(f"Failed to send R18 score: {e}")
             image_url = None
             
             # 5. 画像要求の検出と処理
@@ -87,10 +115,15 @@ class LLMService:
                         # 画像生成タスクを非同期で開始
                         if websocket:
                             try:
+                                status_message = "画像を生成しています..."
+                                if r18_score is not None:
+                                    status_message += f" (R18スコア: {r18_score})"
+                                
                                 await websocket.send_json({
                                     "type": "status",
                                     "status": "image_generation_started",
-                                    "message": "画像を生成しています..."
+                                    "message": status_message,
+                                    "r18_score": r18_score
                                 })
                             except Exception as ws_error:
                                 logger.warning(f"Failed to send WebSocket status: {ws_error}")
@@ -159,7 +192,8 @@ class LLMService:
                 keywords=extracted_keywords,
                 chat_id=chat_id,
                 message_id=user_message_id,
-                force_regenerate=True
+                force_regenerate=True,
+                websocket=websocket
             )
             
             logger.info(f"Image generated and saved: {image_url}")

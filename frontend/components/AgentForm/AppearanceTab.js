@@ -78,8 +78,6 @@ const AppearanceTab = ({
   setGender,
   age,
   setAge,
-  height,
-  setHeight,
   ethnicity,
   setEthnicity,
   bodyType,
@@ -218,12 +216,6 @@ const AppearanceTab = ({
               年齢: {age}歳 <span className="text-gray-500 text-xs font-normal">（任意）</span>
             </label>
             <input id="age" type="range" min="18" max="60" value={age} onChange={(e) => setAge(e.target.value)} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
-          </div>
-          <div>
-            <label className="block text-gray-300 text-sm font-bold mb-2" htmlFor="height">
-              身長: {height}cm <span className="text-gray-500 text-xs font-normal">（任意）</span>
-            </label>
-            <input id="height" type="range" min="150" max="200" value={height} onChange={(e) => setHeight(e.target.value)} className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" />
           </div>
         </div>
 

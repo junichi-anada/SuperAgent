@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, status, Request
 from datetime import datetime
 from sqlalchemy.orm import Session
 from typing import List
@@ -10,7 +10,7 @@ from database import get_db
 from auth import get_current_user, get_user_from_token
 from services.llm_service import LLMService
 from services.feedback_service import FeedbackService
-from dependencies import get_llm_service, get_feedback_service, get_prompt_builder
+from dependencies import get_llm_service, get_ws_llm_service, get_feedback_service, get_prompt_builder
 from services.prompt_builder import PromptBuilder
 logger = logging.getLogger(__name__)
 
@@ -19,6 +19,7 @@ router = APIRouter(prefix="/chats", tags=["chats"])
 @router.post("/", response_model=schemas.ChatWithFirstMessages)
 async def create_chat(
     chat: schemas.ChatCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(get_current_user),
     llm_service: LLMService = Depends(get_llm_service)
@@ -100,6 +101,7 @@ def get_messages(chat_id: int, skip: int = 0, limit: int = 100, db: Session = De
 async def send_message(
     chat_id: int,
     message: schemas.MessageCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: schemas.User = Depends(get_current_user),
     llm_service: LLMService = Depends(get_llm_service),
@@ -188,7 +190,7 @@ async def websocket_endpoint(
     websocket: WebSocket,
     chat_id: int,
     db: Session = Depends(get_db),
-    llm_service: LLMService = Depends(get_llm_service),
+    llm_service: LLMService = Depends(get_ws_llm_service),
     feedback_service: FeedbackService = Depends(get_feedback_service),
     prompt_builder: PromptBuilder = Depends(get_prompt_builder)
 ):

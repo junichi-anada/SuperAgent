@@ -15,6 +15,7 @@ class PromptBuilder:
         agent: Optional[models.Agent] = None,
         context: Optional[List[Dict[str, str]]] = None,
         template_name: Optional[str] = None,
+        r18_mode_chat: bool = False,
         **kwargs: Any
     ) -> str:
         """プロンプトを構築"""
@@ -38,6 +39,7 @@ class PromptBuilder:
         render_context = {
             "user_message": message,
             "conversation_history": context or [],
+            "r18_mode_enabled": r18_mode_chat,
             **kwargs
         }
 

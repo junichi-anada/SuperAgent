@@ -33,7 +33,6 @@ def create_test_agent(db_session):
         eye_color="brown",
         ethnicity="asian",
         age=25,
-        height=165,
         body_type="slim",
         clothing="business"
     )

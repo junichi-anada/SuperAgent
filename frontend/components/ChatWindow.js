@@ -9,6 +9,7 @@ const ChatWindow = ({ chat, agent, onChatCreated, initialMessage }) => {
 	const [error, setError] = useState(null);
 	const [statusMessage, setStatusMessage] = useState(null);
 	const [isConnected, setIsConnected] = useState(false);
+	const [r18Score, setR18Score] = useState(null);
 	// pendingMessage state is completely removed.
 	const ws = useRef(null);
 	const reconnectTimeout = useRef(null);
@@ -129,15 +130,23 @@ const ChatWindow = ({ chat, agent, onChatCreated, initialMessage }) => {
 		socket.onmessage = (event) => {
 			try {
 				const data = JSON.parse(event.data);
+				console.log("Received WebSocket message:", data);
 
 				if (data.type === "status") {
-					setStatusMessage(data.message);
+					if (data.status === "image_generation_r18_score" && data.r18_score !== undefined) {
+						setR18Score(data.r18_score);
+						setStatusMessage(`R18スコアを計算しました: ${data.r18_score}`);
+					} else {
+						setStatusMessage(data.message);
+					}
 				} else if (data.error) {
 					setError(data.content || "エラーが発生しました。");
 					setStatusMessage(null);
+					setR18Score(null);
 				} else {
 					setStatusMessage(null);
 					setError(null);
+					setR18Score(null);
 					setMessages((prevMessages) => {
 						const exists = prevMessages.some((msg) => msg.id === data.id);
 						if (exists) return prevMessages;
@@ -288,6 +297,11 @@ const ChatWindow = ({ chat, agent, onChatCreated, initialMessage }) => {
 						</div>
 					</div>
 				))}
+				{r18Score !== null && (
+					<div className="text-center text-yellow-400 text-sm py-1">
+						R18スコア: {r18Score}
+					</div>
+				)}
 				{statusMessage && (
 					<div className="text-center text-gray-400 italic py-2 animate-pulse">
 						{statusMessage}
